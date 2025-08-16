@@ -1,0 +1,51 @@
+{
+  "name": "@notarial-forms/document-processor",
+  "version": "1.0.0",
+  "description": "Complete OCR document extraction engine for Ecuadorian notarial forms with Strategy Pattern",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "tesseract.js": "^4.1.4",
+    "sharp": "^0.32.6",
+    "pdf-parse": "^1.1.1",
+    "dayjs": "^1.11.10",
+    "zod": "^3.22.4",
+    "node-cache": "^5.1.2",
+    "async-pool": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pdf-parse": "^1.1.1",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "rimraf": "^5.0.0"
+  },
+  "keywords": [
+    "ocr", 
+    "tesseract", 
+    "notarial", 
+    "ecuador", 
+    "document-extraction",
+    "strategy-pattern",
+    "solid-principles",
+    "articulo-29",
+    "vehiculos",
+    "extractos-notariales"
+  ],
+  "author": "Notarial Forms System",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

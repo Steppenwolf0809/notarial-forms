@@ -6,11 +6,19 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend && npm run build --workspace=shared-types",
     "start": "npm run start --workspace=backend",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
-    "clean": "npm run clean --workspaces"
+    "clean": "npm run clean --workspaces",
+    "db:generate": "npm run db:generate --workspace=database",
+    "db:push": "npm run db:push --workspace=database",
+    "db:migrate": "npm run db:migrate --workspace=database",
+    "db:studio": "npm run db:studio --workspace=database",
+    "db:seed": "npm run db:seed --workspace=database",
+    "db:reset": "npm run db:reset --workspace=database",
+    "types:build": "npm run build --workspace=shared-types",
+    "types:dev": "npm run dev --workspace=shared-types"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"

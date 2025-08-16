@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Document model for notarial documents
+model Document {
+  id        String         @id @default(cuid())
+  type      String
+  fileName  String
+  status    DocumentStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relations
+  activeSessions  ActiveSession[]
+  extractedFields ExtractedField[]
+
+  @@map("documents")
+}
+
+// Active session for document processing
+model ActiveSession {
+  id         String   @id @default(cuid())
+  documentId String
+  clientName String
+  position   Int      @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("active_sessions")
+}
+
+// Extracted fields from documents
+model ExtractedField {
+  id         String   @id @default(cuid())
+  documentId String
+  fieldName  String
+  value      String
+  confidence Float    @default(0.0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("extracted_fields")
+}
+
+// Enums
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  ERROR
+}
