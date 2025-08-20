@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm --version)",
+      "Bash(node --version)",
+      "Bash(npx tsc)",
+      "Bash(npx tsx src/index.ts)",
+      "Bash(npx vite)"
     ],
     "deny": [],
     "ask": []

@@ -5,20 +5,20 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspace=frontend && npm run build --workspace=backend && npm run build --workspace=shared-types",
-    "start": "npm run start --workspace=backend",
+    "dev": "npm run dev --workspace=packages/frontend",
+    "build": "npm run build --workspace=packages/frontend && npm run build --workspace=packages/backend && npm run build --workspace=packages/shared-types",
+    "start": "npm run start --workspace=packages/backend",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
     "clean": "npm run clean --workspaces",
-    "db:generate": "npm run db:generate --workspace=database",
-    "db:push": "npm run db:push --workspace=database",
-    "db:migrate": "npm run db:migrate --workspace=database",
-    "db:studio": "npm run db:studio --workspace=database",
-    "db:seed": "npm run db:seed --workspace=database",
-    "db:reset": "npm run db:reset --workspace=database",
-    "types:build": "npm run build --workspace=shared-types",
-    "types:dev": "npm run dev --workspace=shared-types"
+    "db:generate": "npm run db:generate --workspace=packages/database",
+    "db:push": "npm run db:push --workspace=packages/database",
+    "db:migrate": "npm run db:migrate --workspace=packages/database",
+    "db:studio": "npm run db:studio --workspace=packages/database",
+    "db:seed": "npm run db:seed --workspace=packages/database",
+    "db:reset": "npm run db:reset --workspace=packages/database",
+    "types:build": "npm run build --workspace=packages/shared-types",
+    "types:dev": "npm run dev --workspace=packages/shared-types"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"

@@ -13,12 +13,17 @@ datasource db {
 
 // Document model for notarial documents
 model Document {
-  id        String   @id @default(cuid())
-  type      String
-  fileName  String
-  status    DocumentStatus @default(PENDING)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String         @id @default(cuid())
+  fileName     String
+  originalName String
+  filePath     String
+  type         DocumentType   @default(PDF_EXTRACTO)
+  status       DocumentStatus @default(UPLOADED)
+  size         Int            @default(0)
+  notariaId    String
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   // Relations
   activeSessions  ActiveSession[]
@@ -27,15 +32,24 @@ model Document {
   @@map("documents")
 }
 
-// Active session for document processing
+// Active session for document processing (Updated for session-queue)
 model ActiveSession {
-  id         String   @id @default(cuid())
-  documentId String
-  clientName String
-  position   Int      @default(0)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                String        @id @default(cuid())
+  documentId        String
+  notariaId         String
+  clientName        String
+  tramiteType       TramiteType
+  status            SessionStatus @default(WAITING)
+  priority          PriorityLevel @default(NORMAL)
+  position          Int           @default(0)
+  estimatedWaitTime Int           @default(0) // minutes
+  expiresAt         DateTime
+  readyAt           DateTime?
+  calledAt          DateTime?
+  completedAt       DateTime?
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   // Relations
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
@@ -45,13 +59,13 @@ model ActiveSession {
 
 // Extracted fields from documents
 model ExtractedField {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   documentId String
   fieldName  String
   value      String
-  confidence Float   @default(0.0)
+  confidence Float    @default(0.0)
+  type       String?  @default("other")
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 
   // Relations
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
@@ -59,10 +73,88 @@ model ExtractedField {
   @@map("extracted_fields")
 }
 
+// Queue configuration per notaría
+model QueueConfig {
+  notariaId                String  @id
+  maxConcurrentSessions    Int     @default(5)
+  sessionTimeoutMinutes    Int     @default(120)
+  readyTimeoutMinutes      Int     @default(15)
+  estimatedTimePerTramite  Int     @default(20)
+  enablePriorities         Boolean @default(true)
+  autoExpireInactive       Boolean @default(true)
+  notificationSettings     Json?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@map("queue_configs")
+}
+
+// Event logging for analytics and debugging
+model EventLog {
+  id        String   @id @default(uuid())
+  timestamp DateTime @default(now())
+  event     String
+  notariaId String
+  sessionId String?
+  socketId  String?
+  userId    String?
+  data      Json?
+  metadata  Json?
+
+  @@map("event_logs")
+}
+
+// Global configuration
+model GlobalConfig {
+  id     String @id @default("global")
+  config Json
+  updatedAt DateTime @updatedAt
+
+  @@map("global_config")
+}
+
 // Enums
 enum DocumentStatus {
-  PENDING
+  UPLOADED
   PROCESSING
+  EXTRACTED
+  SESSION_ACTIVE
   COMPLETED
   ERROR
+}
+
+enum DocumentType {
+  PDF_EXTRACTO
+  PDF_DILIGENCIA
+  SCREENSHOT_VEHICULO
+}
+
+enum SessionStatus {
+  WAITING
+  READY
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+enum TramiteType {
+  COMPRAVENTA
+  DONACION
+  CONSTITUCION_SOCIEDAD
+  FIDEICOMISO
+  CONSORCIO
+  VEHICULO
+  DILIGENCIA
+  HIPOTECA
+  PODER
+  TESTAMENTO
+  OTRO
+}
+
+enum PriorityLevel {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
 }
