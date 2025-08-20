@@ -366,18 +366,7 @@ ${tramiteData.qrUrl}
             
             <label
               htmlFor="file-upload"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white cursor-pointer transition-colors"
-              style={{
-                backgroundColor: '#2563eb',
-                color: 'white',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                cursor: 'pointer',
-                border: 'none',
-                transition: 'background-color 0.2s'
-              }}
+              className="btn-primary"
             >
               <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -416,7 +405,7 @@ ${tramiteData.qrUrl}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white border border-gray-200 rounded-lg p-4"
+                className="card p-4"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
@@ -471,7 +460,6 @@ ${tramiteData.qrUrl}
                         initial={{ width: 0 }}
                         animate={{ width: `${fileData.progress}%` }}
                         transition={{ duration: 0.3 }}
-                        style={{ backgroundColor: '#2563eb' }}
                       />
                     </div>
                   </div>
@@ -506,7 +494,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.escritura}
                             onChange={(e) => updateExtractedData(fileData.id, 'escritura', '', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                           />
                         </div>
                         <div className="space-y-1">
@@ -515,7 +503,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.fechaOtorgamiento}
                             onChange={(e) => updateExtractedData(fileData.id, 'fechaOtorgamiento', '', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                           />
                         </div>
                         <div className="space-y-1">
@@ -524,7 +512,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.actoContrato}
                             onChange={(e) => updateExtractedData(fileData.id, 'actoContrato', '', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                           />
                         </div>
                         <div className="space-y-1">
@@ -533,7 +521,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.valorContrato}
                             onChange={(e) => updateExtractedData(fileData.id, 'valorContrato', '', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                             placeholder="0.00"
                           />
                         </div>
@@ -548,7 +536,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.ubicacion.provincia}
                             onChange={(e) => updateExtractedData(fileData.id, 'ubicacion', 'provincia', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                             placeholder="Ej: Pichincha, Guayas, etc."
                           />
                         </div>
@@ -558,7 +546,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.ubicacion.canton}
                             onChange={(e) => updateExtractedData(fileData.id, 'ubicacion', 'canton', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                             placeholder="Ej: Quito, Guayaquil, etc."
                           />
                         </div>
@@ -568,7 +556,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.ubicacion.parroquia}
                             onChange={(e) => updateExtractedData(fileData.id, 'ubicacion', 'parroquia', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                             placeholder="Ej: Iñaquito, Centro, etc."
                           />
                         </div>
@@ -576,34 +564,80 @@ ${tramiteData.qrUrl}
 
                       {/* Vendedor - EDITABLE */}
                       <div className="space-y-2">
-                        <h6 className="font-medium text-green-700">Vendedor (Otorgante):</h6>
-                        <div className="space-y-1">
-                          <label className="block text-xs text-gray-600">Nombres:</label>
-                          <input
-                            type="text"
-                            value={fileData.extractedData.vendedor.nombres}
-                            onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'nombres', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="block text-xs text-gray-600">Apellidos:</label>
-                          <input
-                            type="text"
-                            value={fileData.extractedData.vendedor.apellidos}
-                            onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'apellidos', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="block text-xs text-gray-600">Cédula:</label>
-                          <input
-                            type="text"
-                            value={fileData.extractedData.vendedor.cedula}
-                            onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'cedula', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
-                          />
-                        </div>
+                        <h6 className="font-medium text-green-700">
+                          Vendedor (Otorgante):
+                          {fileData.extractedData.vendedor.esPersonaJuridica && (
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                              Persona Jurídica
+                            </span>
+                          )}
+                        </h6>
+                        
+                        {fileData.extractedData.vendedor.esPersonaJuridica ? (
+                          // Campos para persona jurídica
+                          <>
+                            <div className="space-y-1">
+                              <label className="block text-xs text-gray-600">Razón Social:</label>
+                              <input
+                                type="text"
+                                value={fileData.extractedData.vendedor.nombres}
+                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'nombres', e.target.value)}
+                                className="form-input text-xs focus:border-green-500"
+                                placeholder="Ej: HERPAYAL CONSTRUCTORA CIA. LTDA."
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-xs text-gray-600">RUC:</label>
+                              <input
+                                type="text"
+                                value={fileData.extractedData.vendedor.cedula}
+                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'cedula', e.target.value)}
+                                className="form-input text-xs focus:border-green-500"
+                                placeholder="1791345134001"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-xs text-gray-600">Representante Legal:</label>
+                              <input
+                                type="text"
+                                value={fileData.extractedData.vendedor.representanteLegal || 'SANTIAGO JAVIER PADRON LAFEBRE'}
+                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'representanteLegal', e.target.value)}
+                                className="form-input text-xs focus:border-green-500"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          // Campos para persona natural
+                          <>
+                            <div className="space-y-1">
+                              <label className="block text-xs text-gray-600">Nombres:</label>
+                              <input
+                                type="text"
+                                value={fileData.extractedData.vendedor.nombres}
+                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'nombres', e.target.value)}
+                                className="form-input text-xs focus:border-green-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-xs text-gray-600">Apellidos:</label>
+                              <input
+                                type="text"
+                                value={fileData.extractedData.vendedor.apellidos}
+                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'apellidos', e.target.value)}
+                                className="form-input text-xs focus:border-green-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-xs text-gray-600">Cédula:</label>
+                              <input
+                                type="text"
+                                value={fileData.extractedData.vendedor.cedula}
+                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'cedula', e.target.value)}
+                                className="form-input text-xs focus:border-green-500"
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {/* Comprador - EDITABLE */}
@@ -615,7 +649,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.comprador.nombres}
                             onChange={(e) => updateExtractedData(fileData.id, 'comprador', 'nombres', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                           />
                         </div>
                         <div className="space-y-1">
@@ -624,7 +658,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.comprador.apellidos}
                             onChange={(e) => updateExtractedData(fileData.id, 'comprador', 'apellidos', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                           />
                         </div>
                         <div className="space-y-1">
@@ -633,7 +667,7 @@ ${tramiteData.qrUrl}
                             type="text"
                             value={fileData.extractedData.comprador.cedula}
                             onChange={(e) => updateExtractedData(fileData.id, 'comprador', 'cedula', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:border-green-500"
+                            className="form-input text-xs focus:border-green-500"
                           />
                         </div>
                       </div>
@@ -691,37 +725,37 @@ ${tramiteData.qrUrl}
                       <input
                         type="text"
                         placeholder="Teléfono"
-                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        className="form-input text-sm border-blue-300"
                         onChange={(e) => updateFormData(form.id, 'telefono', e.target.value)}
                       />
                       <input
                         type="text"
                         placeholder="Celular"
-                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        className="form-input text-sm border-blue-300"
                         onChange={(e) => updateFormData(form.id, 'celular', e.target.value)}
                       />
                       <input
                         type="email"
                         placeholder="Correo electrónico"
-                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        className="form-input text-sm border-blue-300"
                         onChange={(e) => updateFormData(form.id, 'correoElectronico', e.target.value)}
                       />
                       <input
                         type="text"
                         placeholder="Dirección domiciliaria"
-                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        className="form-input text-sm border-blue-300"
                         onChange={(e) => updateFormData(form.id, 'direccionDomiciliaria', e.target.value)}
                       />
                       <input
                         type="text"
                         placeholder="Profesión u ocupación"
-                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        className="form-input text-sm border-blue-300"
                         onChange={(e) => updateFormData(form.id, 'profesionOcupacion', e.target.value)}
                       />
                       <input
                         type="text"
                         placeholder="Avalúo municipal"
-                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        className="form-input text-sm border-blue-300"
                         onChange={(e) => updateFormData(form.id, 'avaluoMunicipal', e.target.value)}
                       />
                     </div>

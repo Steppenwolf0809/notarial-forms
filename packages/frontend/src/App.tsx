@@ -79,10 +79,8 @@ function App() {
               <motion.button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`tab-button ${
+                  activeTab === tab.id ? 'tab-active' : 'tab-inactive'
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -105,7 +103,7 @@ function App() {
         >
           {activeTab === 'upload' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="card p-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">
                   Subir Documentos Notariales
                 </h2>
@@ -181,7 +179,7 @@ function App() {
             <div className="space-y-6">
               {/* Datos extraídos */}
               {extractedData && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="card p-6">
                   <h2 className="text-lg font-medium text-gray-900 mb-4">
                     Datos Extraídos del Extracto Notarial
                   </h2>
@@ -237,7 +235,7 @@ function App() {
 
               {/* Formularios generados */}
               {generatedForms.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="card p-6">
                   <h2 className="text-lg font-medium text-gray-900 mb-4">
                     Formularios UAFE Generados ({generatedForms.length})
                   </h2>
@@ -285,7 +283,7 @@ function App() {
 
               {/* Estado inicial cuando no hay datos */}
               {!extractedData && generatedForms.length === 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="card p-6">
                   <h2 className="text-lg font-medium text-gray-900 mb-4">
                     Resultados de Extracción
                   </h2>
