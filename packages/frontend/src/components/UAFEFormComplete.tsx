@@ -29,7 +29,9 @@ const UAFEFormComplete: React.FC<UAFEFormProps> = ({
 
   useEffect(() => {
     // Inicializar formulario con datos prellenados del extracto
-    const personData = extractedData[selectedRole]
+    const personData = selectedRole === 'comprador' 
+      ? (extractedData.compradores?.[0] || extractedData.comprador)
+      : extractedData[selectedRole]
     setFormData({
       // Datos básicos prellenados
       nombres: personData?.nombres || '',

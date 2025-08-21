@@ -12,7 +12,10 @@
       "Bash(npx tsc)",
       "Bash(npx tsx src/index.ts)",
       "Bash(npx vite)",
-      "Bash(npx tailwindcss init:*)"
+      "Bash(npx tailwindcss init:*)",
+      "Bash(npm run:*)",
+      "Bash(npx prisma:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

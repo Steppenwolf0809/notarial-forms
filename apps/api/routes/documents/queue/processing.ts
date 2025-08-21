@@ -158,6 +158,34 @@ processingQueue.process('process-document', 3, async (job: Job<DocumentProcessin
       }
     } as ProcessingProgress);
 
+    // Clear any potential Redis cache related to this document before processing
+    try {
+      const cacheKeys = [
+        `document:${documentId}:*`,
+        `extracted:${documentId}:*`,
+        `ocr:${documentId}:*`,
+        `processing:${documentId}:*`
+      ];
+      
+      for (const pattern of cacheKeys) {
+        const keys = await redis.keys(pattern);
+        if (keys.length > 0) {
+          await redis.del(...keys);
+          logger.info(`Cleared ${keys.length} Redis cache keys for pattern: ${pattern}`, {
+            jobId: job.id,
+            documentId,
+            pattern
+          });
+        }
+      }
+    } catch (cacheError) {
+      logger.warn('Failed to clear Redis cache, continuing with processing', {
+        jobId: job.id,
+        documentId,
+        error: cacheError instanceof Error ? cacheError.message : cacheError
+      });
+    }
+
     // Process document with document-processor
     const startTime = Date.now();
     const processingResult = await documentProcessor.processDocument(filePath, {
@@ -202,16 +230,45 @@ processingQueue.process('process-document', 3, async (job: Job<DocumentProcessin
       message: 'Guardando datos extraídos...'
     } as ProcessingProgress);
 
+    // IMPORTANT: Clear any existing extracted fields before saving new ones
+    // This ensures fresh data for each processing and prevents cache contamination
+    const deletedFieldsResult = await prisma.extractedField.deleteMany({
+      where: { documentId }
+    });
+    
+    logger.info(`Cleared ${deletedFieldsResult.count} existing extracted fields for document ${documentId}`, {
+      jobId: job.id,
+      documentId,
+      deletedCount: deletedFieldsResult.count,
+      fileName: fileName,
+      originalName: job.data.originalName
+    });
+
     // Save extracted fields to database
     if (extractedFields.length > 0) {
+      const fieldsToSave = extractedFields.map(field => ({
+        documentId,
+        fieldName: field.fieldName,
+        value: field.value,
+        confidence: field.confidence,
+        type: field.type,
+        createdAt: new Date()
+      }));
+
       await prisma.extractedField.createMany({
-        data: extractedFields.map(field => ({
-          documentId,
-          fieldName: field.fieldName,
-          value: field.value,
-          confidence: field.confidence,
-          type: field.type,
-          createdAt: new Date()
+        data: fieldsToSave
+      });
+      
+      logger.info(`Saved ${extractedFields.length} new extracted fields for document ${documentId}`, {
+        jobId: job.id,
+        documentId,
+        fileName: fileName,
+        originalName: job.data.originalName,
+        fieldCount: extractedFields.length,
+        sampleFields: extractedFields.slice(0, 3).map(f => ({ 
+          name: f.fieldName, 
+          value: f.value.substring(0, 50) + (f.value.length > 50 ? '...' : ''),
+          confidence: f.confidence 
         }))
       });
     }

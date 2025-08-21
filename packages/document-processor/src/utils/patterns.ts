@@ -46,8 +46,9 @@ export class EcuadorPatterns {
   static readonly provinces = /\b(AZUAY|BOLIVAR|CAÑAR|CARCHI|COTOPAXI|CHIMBORAZO|EL\s+ORO|ESMERALDAS|GUAYAS|IMBABURA|LOJA|LOS\s+RIOS|MANABI|MORONA\s+SANTIAGO|NAPO|PASTAZA|PICHINCHA|TUNGURAHUA|ZAMORA\s+CHINCHIPE|GALAPAGOS|SUCUMBIOS|ORELLANA|SANTO\s+DOMINGO|SANTA\s+ELENA)\b/gi;
   static readonly cantons = /\b(QUITO|GUAYAQUIL|CUENCA|AMBATO|MANTA|PORTOVIEJO|MACHALA|SANTO\s+DOMINGO|ELOY\s+ALFARO|LOJA|RIOBAMBA|ESMERALDAS|IBARRA|MILAGRO|LA\s+LIBERTAD|BABAHOYO|GUARANDA|TULCAN|LATACUNGA|PUYO|MACAS|TENA|NUEVA\s+LOJA|FRANCISCO\s+DE\s+ORELLANA|ZAMORA|AZOGUES|PASAJE|DAULE|SAMBORONDON|CAYAMBE|SANGOLQUI|OTAVALO|SALINAS)\b/gi;
   
-  // Document specific
-  static readonly escrituraNumber = /ESCRITURA\s+N[°º]?\s*(\d+)/gi;
+  // Document specific - Patrones mejorados para números de escritura ecuatorianos
+  static readonly escrituraNumber = /ESCRITURA\s+N[°º]?\s*[:\s]*(\d{4,18}P?\d{0,10})/gi;
+  static readonly escrituraCompleteNumber = /(\d{11,18}P\d{4,6})/g;
   static readonly repertorioNumber = /REPERTORIO\s+N[°º]?\s*(\d+)/gi;
   static readonly folioNumber = /FOLIO\s+N[°º]?\s*(\d+)/gi;
   
@@ -56,9 +57,12 @@ export class EcuadorPatterns {
   static readonly valorOperacion = /VALOR\s+DE\s+LA\s+OPERACION|VALOR\s+OPERACION|PRECIO\s+DE\s+VENTA/gi;
   static readonly formaPago = /FORMA\s+DE\s+PAGO|MODALIDAD\s+DE\s+PAGO|CONDICIONES\s+DE\s+PAGO/gi;
   
-  // Address patterns
+  // Address patterns - mejorados para direcciones ecuatorianas
   static readonly address = /\b(CALLE|AVENIDA|AV\.|PASAJE|SECTOR|BARRIO|CIUDADELA|CONJUNTO|URBANIZACION|VILLA|CONDOMINIOS?)\s+[A-ZÁÉÍÓÚÑ0-9\s\-\.]{5,50}/gi;
   static readonly addressNumber = /\b(N[°º]?\s*\d+[\-\d]*|#\s*\d+[\-\d]*|NUMERO\s+\d+)\b/gi;
+  static readonly fullAddress = /(CALLE|AV\.|AVENIDA)\s+([A-ZÁÉÍÓÚÑ\s]+?)\s+N?[°º]?\s*(\d+[\-\d]*)\s+Y\s+(CALLE|AV\.|AVENIDA)?\s*([A-ZÁÉÍÓÚÑ\s]+)/gi;
+  static readonly simpleAddress = /(CALLE|AVENIDA|AV\.)\s+([A-ZÁÉÍÓÚÑ\s]+?)\s+Y\s+([A-ZÁÉÍÓÚÑ\s]+)/gi;
+  static readonly addressLocation = /(?:DIRECCION|UBICADO\s+EN|INMUEBLE\s+UBICADO\s+EN)[:\s]+([A-ZÁÉÍÓÚÑ\s\d\-\.]+)/gi;
 }
 
 export class PatternValidator {

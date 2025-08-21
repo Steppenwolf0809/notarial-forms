@@ -29,6 +29,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   const [generatedForms, setGeneratedForms] = useState<any[]>([])
   const [showTramiteManager, setShowTramiteManager] = useState(false)
   const [currentTramiteData, setCurrentTramiteData] = useState<any>(null)
+  const [qrCode, setQrCode] = useState<string>('')
+  const [processingQueue, setProcessingQueue] = useState<any[]>([])
 
   const generateId = () => Math.random().toString(36).substr(2, 9)
 
@@ -144,14 +146,14 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
     setFiles(prev => prev.filter(f => f.id !== id))
   }
 
-  const generateForms = (_extractedData: any) => {
+  const generateForms = (extractedData: any) => {
     const baseId = generateId()
     
     // Generar formulario para el comprador
     const compradorForm = {
       id: `${baseId}-comprador`,
       tipo: 'comprador',
-      persona: extractedData.comprador,
+      persona: extractedData.compradores?.[0] || extractedData.comprador,
       acto: extractedData,
       datosComplementarios: {
         // Datos que el operador puede llenar
@@ -560,6 +562,67 @@ ${tramiteData.qrUrl}
                             placeholder="Ej: Iñaquito, Centro, etc."
                           />
                         </div>
+                        
+                        {/* Dirección del Inmueble */}
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <h6 className="font-medium text-green-700 mb-2">Dirección del Inmueble:</h6>
+                          <div className="space-y-1">
+                            <label className="block text-xs text-gray-600">Calle Principal:</label>
+                            <input
+                              type="text"
+                              value={fileData.extractedData.inmueble?.direccion?.callePrincipal || ''}
+                              onChange={(e) => updateExtractedData(fileData.id, 'inmueble', 'direccion', e.target.value)}
+                              className="form-input text-xs focus:border-green-500"
+                              placeholder="Ej: AV. AMAZONAS"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-xs text-gray-600">Número:</label>
+                            <input
+                              type="text"
+                              value={fileData.extractedData.inmueble?.direccion?.numero || ''}
+                              onChange={(e) => updateExtractedData(fileData.id, 'inmueble', 'numero', e.target.value)}
+                              className="form-input text-xs focus:border-green-500"
+                              placeholder="Ej: N12-34"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-xs text-gray-600">Calle Secundaria:</label>
+                            <input
+                              type="text"
+                              value={fileData.extractedData.inmueble?.direccion?.calleSecundaria || ''}
+                              onChange={(e) => updateExtractedData(fileData.id, 'inmueble', 'calleSecundaria', e.target.value)}
+                              className="form-input text-xs focus:border-green-500"
+                              placeholder="Ej: AV. COLÓN"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-xs text-gray-600">Tipo de Inmueble:</label>
+                            <select
+                              value={fileData.extractedData.inmueble?.tipo || ''}
+                              onChange={(e) => updateExtractedData(fileData.id, 'inmueble', 'tipo', e.target.value)}
+                              className="form-input text-xs focus:border-green-500"
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option value="DEPARTAMENTO">DEPARTAMENTO</option>
+                              <option value="CASA">CASA</option>
+                              <option value="OFICINA">OFICINA</option>
+                              <option value="LOCAL">LOCAL COMERCIAL</option>
+                              <option value="TERRENO">TERRENO</option>
+                              <option value="BODEGA">BODEGA</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-xs text-gray-600">Área (m²):</label>
+                            <input
+                              type="text"
+                              value={fileData.extractedData.inmueble?.area || ''}
+                              onChange={(e) => updateExtractedData(fileData.id, 'inmueble', 'area', e.target.value)}
+                              className="form-input text-xs focus:border-green-500"
+                              placeholder="Ej: 120.50"
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       {/* Vendedor - EDITABLE */}
@@ -640,36 +703,95 @@ ${tramiteData.qrUrl}
                         )}
                       </div>
 
-                      {/* Comprador - EDITABLE */}
+                      {/* Compradores - EDITABLE (soporta múltiples) */}
                       <div className="space-y-2">
-                        <h6 className="font-medium text-green-700">Comprador (Beneficiario):</h6>
-                        <div className="space-y-1">
-                          <label className="block text-xs text-gray-600">Nombres:</label>
-                          <input
-                            type="text"
-                            value={fileData.extractedData.comprador.nombres}
-                            onChange={(e) => updateExtractedData(fileData.id, 'comprador', 'nombres', e.target.value)}
-                            className="form-input text-xs focus:border-green-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="block text-xs text-gray-600">Apellidos:</label>
-                          <input
-                            type="text"
-                            value={fileData.extractedData.comprador.apellidos}
-                            onChange={(e) => updateExtractedData(fileData.id, 'comprador', 'apellidos', e.target.value)}
-                            className="form-input text-xs focus:border-green-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="block text-xs text-gray-600">Cédula:</label>
-                          <input
-                            type="text"
-                            value={fileData.extractedData.comprador.cedula}
-                            onChange={(e) => updateExtractedData(fileData.id, 'comprador', 'cedula', e.target.value)}
-                            className="form-input text-xs focus:border-green-500"
-                          />
-                        </div>
+                        <h6 className="font-medium text-green-700">
+                          Compradores (Beneficiarios):
+                          {fileData.extractedData.compradores?.length > 1 && (
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                              {fileData.extractedData.compradores.length} compradores
+                            </span>
+                          )}
+                          {fileData.extractedData.relacionCompradores?.sonConyuges && (
+                            <span className="ml-2 text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
+                              💒 Cónyuges
+                            </span>
+                          )}
+                        </h6>
+                        
+                        {(fileData.extractedData.compradores || [fileData.extractedData.comprador]).map((comprador, index) => 
+                          comprador ? (
+                            <div key={index} className="border border-gray-200 rounded p-2 space-y-1">
+                              <div className="text-xs font-medium text-gray-700">
+                                Comprador {index + 1}:
+                              </div>
+                              <div className="space-y-1">
+                                <label className="block text-xs text-gray-600">Nombres:</label>
+                                <input
+                                  type="text"
+                                  value={comprador.nombres}
+                                  onChange={(e) => {
+                                    // Actualizar el comprador específico en el array
+                                    const newCompradores = [...(fileData.extractedData.compradores || [fileData.extractedData.comprador])]
+                                    newCompradores[index] = {...newCompradores[index], nombres: e.target.value}
+                                    setFiles(prev => prev.map(f => 
+                                      f.id === fileData.id ? {
+                                        ...f,
+                                        extractedData: {
+                                          ...f.extractedData,
+                                          compradores: newCompradores
+                                        }
+                                      } : f
+                                    ))
+                                  }}
+                                  className="form-input text-xs focus:border-green-500"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="block text-xs text-gray-600">Apellidos:</label>
+                                <input
+                                  type="text"
+                                  value={comprador.apellidos}
+                                  onChange={(e) => {
+                                    const newCompradores = [...(fileData.extractedData.compradores || [fileData.extractedData.comprador])]
+                                    newCompradores[index] = {...newCompradores[index], apellidos: e.target.value}
+                                    setFiles(prev => prev.map(f => 
+                                      f.id === fileData.id ? {
+                                        ...f,
+                                        extractedData: {
+                                          ...f.extractedData,
+                                          compradores: newCompradores
+                                        }
+                                      } : f
+                                    ))
+                                  }}
+                                  className="form-input text-xs focus:border-green-500"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="block text-xs text-gray-600">Cédula:</label>
+                                <input
+                                  type="text"
+                                  value={comprador.cedula}
+                                  onChange={(e) => {
+                                    const newCompradores = [...(fileData.extractedData.compradores || [fileData.extractedData.comprador])]
+                                    newCompradores[index] = {...newCompradores[index], cedula: e.target.value}
+                                    setFiles(prev => prev.map(f => 
+                                      f.id === fileData.id ? {
+                                        ...f,
+                                        extractedData: {
+                                          ...f.extractedData,
+                                          compradores: newCompradores
+                                        }
+                                      } : f
+                                    ))
+                                  }}
+                                  className="form-input text-xs focus:border-green-500"
+                                />
+                              </div>
+                            </div>
+                          ) : null
+                        )}
                       </div>
                     </div>
                   </div>

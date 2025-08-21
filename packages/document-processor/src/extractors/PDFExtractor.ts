@@ -305,14 +305,30 @@ export class PDFExtractor implements DocumentExtractor {
       }
     }
 
-    // Escritura number
+    // Escritura number - usar múltiples patrones para capturar números largos
     const escrituraMatches = Array.from(text.matchAll(EcuadorPatterns.escrituraNumber));
+    const escrituraCompleteMatches = Array.from(text.matchAll(EcuadorPatterns.escrituraCompleteNumber));
+    
+    // Procesar números de escritura con el formato "ESCRITURA N°: xxxxx"
     escrituraMatches.forEach(match => {
       if (match[1]) {
         fields.push({
           fieldName: 'numero_escritura',
           value: match[1],
           confidence: 0.9,
+          type: FieldType.OTHER,
+          validationStatus: 'valid'
+        });
+      }
+    });
+    
+    // Procesar números de escritura completos (formato ecuatoriano largo)
+    escrituraCompleteMatches.forEach(match => {
+      if (match[1]) {
+        fields.push({
+          fieldName: 'numero_escritura_completo',
+          value: match[1],
+          confidence: 0.95, // Mayor confianza para el formato completo
           type: FieldType.OTHER,
           validationStatus: 'valid'
         });

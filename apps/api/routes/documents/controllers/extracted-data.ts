@@ -224,7 +224,8 @@ export const getExtractedData = async (req: Request, res: Response): Promise<voi
     logger.info(`Getting extracted data for document ${id}`, {
       requestId: req.requestId,
       documentId: id,
-      format
+      format,
+      timestamp: new Date().toISOString()
     });
 
     // Get document with extracted fields
@@ -374,13 +375,24 @@ export const getExtractedData = async (req: Request, res: Response): Promise<voi
     logger.info(`Retrieved extracted data for document ${id}`, {
       requestId: req.requestId,
       documentId: id,
+      fileName: document.fileName,
+      originalName: document.originalName,
+      documentType: document.type,
+      documentStatus: document.status,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
       fieldsCount: document.extractedFields.length,
       confidence,
       tramiteType,
       hasPersonas: personas.length > 0,
       hasVehiculo: !!vehiculo,
       hasNotarial: !!notarial,
-      hasSociedades: sociedades.length > 0
+      hasSociedades: sociedades.length > 0,
+      sampleExtractedFields: document.extractedFields.slice(0, 3).map(f => ({
+        fieldName: f.fieldName,
+        value: f.value.substring(0, 50) + (f.value.length > 50 ? '...' : ''),
+        confidence: f.confidence
+      }))
     });
 
     res.json(response);
