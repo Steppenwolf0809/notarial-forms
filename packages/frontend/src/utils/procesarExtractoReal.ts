@@ -821,11 +821,11 @@ const extraerSeccionVendedor = (texto: string): string => {
   
   // Buscar patrón directo: Natural + Nombre + VENDEDOR
   const patronesVendedor = [
-    // Patrón para encontrar vendedor en el formato real
-    /Natural[\s\S]*?VENDEDOR[\s\S]*?(?=A FAVOR DE|Natural.*?COMPRADOR)/i,
-    // Buscar desde el inicio hasta A FAVOR DE
-    /[\s\S]*?VENDEDOR[\s\S]*?(?=A FAVOR DE)/i,
-    // Buscar todo hasta que aparezca COMPRADOR
+    // Desde OTORGADO POR hasta A FAVOR DE: contiene todas las filas de vendedores
+    /OTORGADO\s+POR[\s\S]*?(?=A\s+FAVOR\s+DE|UBICACION|UBICACIÓN|DESCRIPCION|DESCRIPCIÓN|$)/i,
+    // Alternativa: desde NATURAL ... VENDEDOR hasta A FAVOR DE
+    /NATURAL[\s\S]*?VENDEDOR[\s\S]*?(?=A\s+FAVOR\s+DE)/i,
+    // Fallback: todo antes de la palabra COMPRADOR
     /[\s\S]*?VENDEDOR[\s\S]*?(?=COMPRADOR)/i
   ]
   

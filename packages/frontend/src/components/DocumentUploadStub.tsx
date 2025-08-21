@@ -615,82 +615,75 @@ ${tramiteData.qrUrl}
                         </div>
                       </div>
 
-                      {/* Vendedor - EDITABLE */}
+                      {/* Vendedores - soporta múltiples */}
                       <div className="space-y-2">
                         <h6 className="font-medium text-green-700">
-                          Vendedor (Otorgante):
-                          {fileData.extractedData.vendedor.esPersonaJuridica && (
+                          Vendedores (Otorgantes):
+                          {fileData.extractedData.vendedores?.length > 1 && (
                             <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              Persona Jurídica
+                              {fileData.extractedData.vendedores.length} vendedores
                             </span>
                           )}
                         </h6>
-                        
-                        {fileData.extractedData.vendedor.esPersonaJuridica ? (
-                          // Campos para persona jurídica
-                          <>
-                            <div className="space-y-1">
-                              <label className="block text-xs text-gray-600">Razón Social:</label>
+
+                        {(fileData.extractedData.vendedores && fileData.extractedData.vendedores.length > 0
+                          ? fileData.extractedData.vendedores
+                          : [fileData.extractedData.vendedor]
+                        ).map((v: any, index: number) => (
+                          <div key={index} className="border border-gray-200 rounded p-2 space-y-1">
+                            <div className="text-xs font-medium text-gray-700">Vendedor {index + 1}:</div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                               <input
                                 type="text"
-                                value={fileData.extractedData.vendedor.nombres}
-                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'nombres', e.target.value)}
+                                placeholder="Nombres"
                                 className="form-input text-xs focus:border-green-500"
-                                placeholder="Ej: HERPAYAL CONSTRUCTORA CIA. LTDA."
+                                value={v?.nombres || ''}
+                                onChange={(e) => {
+                                  const arr = (fileData.extractedData.vendedores && fileData.extractedData.vendedores.length > 0
+                                    ? [...fileData.extractedData.vendedores]
+                                    : [ { ...fileData.extractedData.vendedor } ])
+                                  arr[index] = { ...arr[index], nombres: e.target.value }
+                                  setFiles(prev => prev.map(f => f.id === fileData.id ? {
+                                    ...f,
+                                    extractedData: { ...f.extractedData, vendedores: arr, vendedor: arr[0] }
+                                  } : f))
+                                }}
                               />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="block text-xs text-gray-600">RUC:</label>
                               <input
                                 type="text"
-                                value={fileData.extractedData.vendedor.cedula}
-                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'cedula', e.target.value)}
+                                placeholder="Apellidos"
                                 className="form-input text-xs focus:border-green-500"
-                                placeholder="1791345134001"
+                                value={v?.apellidos || ''}
+                                onChange={(e) => {
+                                  const arr = (fileData.extractedData.vendedores && fileData.extractedData.vendedores.length > 0
+                                    ? [...fileData.extractedData.vendedores]
+                                    : [ { ...fileData.extractedData.vendedor } ])
+                                  arr[index] = { ...arr[index], apellidos: e.target.value }
+                                  setFiles(prev => prev.map(f => f.id === fileData.id ? {
+                                    ...f,
+                                    extractedData: { ...f.extractedData, vendedores: arr, vendedor: arr[0] }
+                                  } : f))
+                                }}
                               />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="block text-xs text-gray-600">Representante Legal:</label>
                               <input
                                 type="text"
-                                value={fileData.extractedData.vendedor.representanteLegal || 'SANTIAGO JAVIER PADRON LAFEBRE'}
-                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'representanteLegal', e.target.value)}
+                                placeholder="Identificación"
                                 className="form-input text-xs focus:border-green-500"
+                                value={v?.cedula || ''}
+                                onChange={(e) => {
+                                  const arr = (fileData.extractedData.vendedores && fileData.extractedData.vendedores.length > 0
+                                    ? [...fileData.extractedData.vendedores]
+                                    : [ { ...fileData.extractedData.vendedor } ])
+                                  arr[index] = { ...arr[index], cedula: e.target.value }
+                                  setFiles(prev => prev.map(f => f.id === fileData.id ? {
+                                    ...f,
+                                    extractedData: { ...f.extractedData, vendedores: arr, vendedor: arr[0] }
+                                  } : f))
+                                }}
                               />
                             </div>
-                          </>
-                        ) : (
-                          // Campos para persona natural
-                          <>
-                            <div className="space-y-1">
-                              <label className="block text-xs text-gray-600">Nombres:</label>
-                              <input
-                                type="text"
-                                value={fileData.extractedData.vendedor.nombres}
-                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'nombres', e.target.value)}
-                                className="form-input text-xs focus:border-green-500"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="block text-xs text-gray-600">Apellidos:</label>
-                              <input
-                                type="text"
-                                value={fileData.extractedData.vendedor.apellidos}
-                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'apellidos', e.target.value)}
-                                className="form-input text-xs focus:border-green-500"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="block text-xs text-gray-600">Cédula:</label>
-                              <input
-                                type="text"
-                                value={fileData.extractedData.vendedor.cedula}
-                                onChange={(e) => updateExtractedData(fileData.id, 'vendedor', 'cedula', e.target.value)}
-                                className="form-input text-xs focus:border-green-500"
-                              />
-                            </div>
-                          </>
-                        )}
+                          </div>
+                        ))}
                       </div>
 
                       {/* Compradores - EDITABLE (soporta múltiples) */}
@@ -709,7 +702,7 @@ ${tramiteData.qrUrl}
                           )}
                         </h6>
                         
-                        {(fileData.extractedData.compradores || [fileData.extractedData.comprador]).map((comprador, index) => 
+                        {(fileData.extractedData.compradores || [fileData.extractedData.comprador]).map((comprador: any, index: number) => 
                           comprador ? (
                             <div key={index} className="border border-gray-200 rounded p-2 space-y-1">
                               <div className="text-xs font-medium text-gray-700">
