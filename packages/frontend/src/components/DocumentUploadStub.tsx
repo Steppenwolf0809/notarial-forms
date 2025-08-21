@@ -612,16 +612,6 @@ ${tramiteData.qrUrl}
                               <option value="BODEGA">BODEGA</option>
                             </select>
                           </div>
-                          <div className="space-y-1">
-                            <label className="block text-xs text-gray-600">Área (m²):</label>
-                            <input
-                              type="text"
-                              value={fileData.extractedData.inmueble?.area || ''}
-                              onChange={(e) => updateExtractedData(fileData.id, 'inmueble', 'area', e.target.value)}
-                              className="form-input text-xs focus:border-green-500"
-                              placeholder="Ej: 120.50"
-                            />
-                          </div>
                         </div>
                       </div>
 

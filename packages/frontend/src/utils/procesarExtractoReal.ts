@@ -131,6 +131,18 @@ interface DatosExtractoReal {
     ruc?: string
     representanteLegal?: string
   }
+  vendedores?: Array<{
+    nombres: string
+    apellidos: string
+    cedula: string
+    nacionalidad: string
+    calidad: string
+    tipoInterviniente: string
+    esPersonaJuridica?: boolean
+    razonSocial?: string
+    ruc?: string
+    representanteLegal?: string
+  }>
   compradores: Array<{
     nombres: string
     apellidos: string
@@ -569,7 +581,7 @@ const extraerDatosRealesDelTexto = async (texto: string, fileName: string): Prom
   
   // 5. Extraer personas (vendedor y compradores)
   console.log('👥 INICIANDO EXTRACCIÓN DE PERSONAS...')
-  const { vendedor, compradores } = extraerPersonas(textoUpper)
+  const { vendedor, compradores, vendedores } = extraerPersonas(textoUpper)
   console.log(`👤 Vendedor: ${vendedor.nombres} ${vendedor.apellidos} ${vendedor.cedula}`)
   console.log(`👥 Compradores: ${compradores.length} encontrados`)
   compradores.forEach((comp, i) => {
@@ -594,6 +606,7 @@ const extraerDatosRealesDelTexto = async (texto: string, fileName: string): Prom
     valorContrato,
     vendedor,
     compradores,
+    vendedores,
     relacionCompradores,
     ubicacion,
     inmueble: {
@@ -697,11 +710,11 @@ const extraerValorContrato = (texto: string): string => {
   // Patrones específicos para documentos notariales ecuatorianos
   const patronesEspecificos = [
     // Patrón 1: CUANTÍA DEL ACTO O CONTRATO: seguido de valor
-    /CUANTIA\s+DEL\s+ACTO\s+O\s+CONTRATO\s*:?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?|[0-9]{5,})/i,
+    /CUANTIA\s+DEL\s+ACTO\s+O\s+CONTRATO\s*:?\s*(([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{4,})(?:[.,][0-9]{2})?)/i,
     // Patrón 2: CUANTÍA: seguido de valor
-    /CUANTIA\s*:?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?|[0-9]{5,})/i,
+    /CUANTIA\s*:?\s*(([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{4,})(?:[.,][0-9]{2})?)/i,
     // Patrón 3: VALOR DEL CONTRATO: seguido de valor  
-    /VALOR\s+DEL\s+CONTRATO\s*:?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?|[0-9]{5,})/i,
+    /VALOR\s+DEL\s+CONTRATO\s*:?\s*(([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{4,})(?:[.,][0-9]{2})?)/i,
     // Patrón 4: PRECIO: seguido de valor
     /PRECIO\s*:?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?)/i,
     // Patrón 5: USD o DÓLARES seguido de valor
@@ -773,15 +786,34 @@ const extraerValorContrato = (texto: string): string => {
 /**
  * Extrae datos de personas (vendedores y compradores)
  */
-const extraerPersonas = (texto: string): { vendedor: any; compradores: any[] } => {
+const extraerPersonas = (texto: string): { vendedor: any; compradores: any[]; vendedores: any[] } => {
   // Buscar secciones de vendedor y compradores
   const seccionVendedor = extraerSeccionVendedor(texto)
   const seccionCompradores = extraerSeccionCompradores(texto)
-  
-  const vendedor = parsearPersona(seccionVendedor, 'VENDEDOR')
+
+  // Varios vendedores: segmentar por NATURAL en la sección vendedor (si existiera más de uno)
+  const vendedores: any[] = []
+  if (seccionVendedor) {
+    const indices: number[] = []
+    const re = /\bNATURAL\b/g
+    let m: RegExpExecArray | null
+    while ((m = re.exec(seccionVendedor)) !== null) indices.push(m.index)
+    if (indices.length > 1) {
+      for (let i = 0; i < indices.length; i++) {
+        const inicio = indices[i]
+        const fin = i === indices.length - 1 ? seccionVendedor.length : indices[i+1]
+        const bloque = seccionVendedor.substring(inicio, fin)
+        vendedores.push(parsearPersona(bloque, 'VENDEDOR'))
+      }
+    } else {
+      vendedores.push(parsearPersona(seccionVendedor, 'VENDEDOR'))
+    }
+  }
+
+  const vendedor = vendedores[0] || parsearPersona(seccionVendedor, 'VENDEDOR')
   const compradores = parsearCompradores(seccionCompradores)
   
-  return { vendedor, compradores }
+  return { vendedor, compradores, vendedores }
 }
 
 const extraerSeccionVendedor = (texto: string): string => {
@@ -846,16 +878,17 @@ const parsearPersona = (seccion: string, calidad: string): any => {
   let cedula = '0000000000'
   let nacionalidad = 'ECUATORIANA'
   
-  // Buscar cédula ecuatoriana
-  const cedulaMatch = seccion.match(/C[ÉE]DULA[:\s]*([0-9]{10})/i)
+  // Buscar cédula ecuatoriana (permitiendo saltos/espacios/cortes)
+  const cedulaMatch = seccion.match(/C[ÉE]DULA[:\s]*([0-9\.\-\s]{10,})/i)
   if (cedulaMatch) {
-    cedula = cedulaMatch[1]
+    const soloDigitos = cedulaMatch[1].replace(/\D/g, '')
+    if (soloDigitos.length >= 10) cedula = soloDigitos.substring(0, 10)
     console.log(`👤 Cédula ecuatoriana encontrada: ${cedula}`)
   } else {
     // Buscar pasaporte extranjero
-    const pasaporteMatch = seccion.match(/PASAPORTE[:\s]*([A-Z0-9]+)/i)
+    const pasaporteMatch = seccion.match(/PASAPORTE[:\s]*([A-Z0-9\-\s]{4,20}?)(?=\s+(?:ECUATORIANA|ALEMANA|AMERICANA|COLOMBIANA|PERUANA|VENEZOLANA|ARGENTINA|CHILENA|BRASILENA|NACIONALIDAD|CALIDAD|COMPRADOR|VENDEDOR|PERSONA|QUE|REPRESENTA|$))/i)
     if (pasaporteMatch) {
-      cedula = pasaporteMatch[1]
+      cedula = pasaporteMatch[1].replace(/[^A-Z0-9]/g, '')
       console.log(`👤 Pasaporte encontrado: ${cedula}`)
       
       // Detectar nacionalidad
@@ -871,7 +904,7 @@ const parsearPersona = (seccion: string, calidad: string): any => {
   
   const patronesNombre: RegExp[] = [
     // Buscar después de Natural hasta REPRESENTADO o POR
-    /NATURAL\s+([A-ZÑ\s]+?)(?=\s+(?:REPRESENTADO|POR|CEDULA|CÉDULA|PASAPORTE))/i,
+    /NATURAL\s+([A-ZÑ\s]+?)(?=\s+(?:REPRESENTADO\s+POR|REPRESENTADO|POR\s+ESTIPULACION|POR|CEDULA|CÉDULA|PASAPORTE|DOCUMENTO|CALIDAD|NACIONALIDAD|COMPRADOR|VENDEDOR))/i,
     // Buscar nombres largos en mayúsculas (3+ palabras) - CON FLAG GLOBAL
     /([A-ZÑ]+\s+[A-ZÑ]+\s+[A-ZÑ]+(?:\s+[A-ZÑ]+)*)/g
   ]
@@ -886,7 +919,7 @@ const parsearPersona = (seccion: string, calidad: string): any => {
     for (const match of matches) {
       const candidato = match[1] || match[0]
       // Filtrar palabras que no son nombres
-      if (candidato && candidato.length > 10 && 
+      if (candidato && candidato.length > 4 && 
           !candidato.includes('REPRESENTADO') &&
           !candidato.includes('CEDULA') &&
           !candidato.includes('PASAPORTE') &&
@@ -931,31 +964,49 @@ const parsearPersona = (seccion: string, calidad: string): any => {
 }
 
 const parsearCompradores = (seccion: string): any[] => {
-  // Dividir por cédulas para separar compradores múltiples
-  const cedulaPatron = /C[ÉE]DULA[:\s]*([0-9]{10})/gi
-  const pasaportePatron = /PASAPORTE[:\s]*([A-Z0-9]+)/gi
-  const cedulaMatches = [...seccion.matchAll(cedulaPatron)]
-  const pasaporteMatches = [...seccion.matchAll(pasaportePatron)]
-  
-  if (cedulaMatches.length === 0 && pasaporteMatches.length === 0) {
-    return [parsearPersona(seccion, 'COMPRADOR')]
-  }
-  
-  const compradores = []
-  
-  // Unir y ordenar por índice para separar por cada documento
-  const todosDocs = [
-    ...cedulaMatches.map(m => ({ index: m.index || 0, len: m[0].length })),
-    ...pasaporteMatches.map(m => ({ index: m.index || 0, len: m[0].length }))
-  ].sort((a,b) => a.index - b.index)
+  // Cortar la sección desde "A FAVOR DE" para evitar arrastre de vendedor
+  const inicioAFavor = seccion.indexOf('A FAVOR DE')
+  const texto = inicioAFavor >= 0 ? seccion.substring(inicioAFavor) : seccion
 
-  for (let i = 0; i < todosDocs.length; i++) {
-    const inicio = i === 0 ? 0 : todosDocs[i-1].index + todosDocs[i-1].len
-    const fin = i === todosDocs.length - 1 ? seccion.length : todosDocs[i+1].index
-    const subseccion = seccion.substring(inicio, fin)
-    compradores.push(parsearPersona(subseccion, 'COMPRADOR'))
+  // Identificar bloques por filas de la tabla: cada "NATURAL" abre un comprador
+  const indiceNaturales: number[] = []
+  const regexNatural = /\bNATURAL\b/g
+  let m: RegExpExecArray | null
+  while ((m = regexNatural.exec(texto)) !== null) {
+    indiceNaturales.push(m.index)
   }
-  
+
+  // Si no hay múltiples NATURAL, fallback a separar por documentos
+  if (indiceNaturales.length <= 1) {
+    const cedulaPatron = /C[ÉE]DULA[:\s]*([0-9\.\-\s]{10,})/gi
+    const pasaportePatron = /PASAPORTE[:\s]*([A-Z0-9\-\s]{4,20}?)(?=\s+(?:ECUATORIANA|ALEMANA|AMERICANA|COLOMBIANA|PERUANA|VENEZOLANA|ARGENTINA|CHILENA|BRASILENA|NACIONALIDAD|CALIDAD|COMPRADOR|VENDEDOR|PERSONA|QUE|REPRESENTA|$))/gi
+    const cedulaMatches = [...texto.matchAll(cedulaPatron)]
+    const pasaporteMatches = [...texto.matchAll(pasaportePatron)]
+    if (cedulaMatches.length === 0 && pasaporteMatches.length === 0) {
+      return [parsearPersona(texto, 'COMPRADOR')]
+    }
+    const compradores: any[] = []
+    const todosDocs = [
+      ...cedulaMatches.map(m => ({ index: m.index || 0, len: m[0].length })),
+      ...pasaporteMatches.map(m => ({ index: m.index || 0, len: m[0].length }))
+    ].sort((a,b) => a.index - b.index)
+    for (let i = 0; i < todosDocs.length; i++) {
+      const inicio = i === 0 ? 0 : todosDocs[i-1].index + todosDocs[i-1].len
+      const fin = i === todosDocs.length - 1 ? texto.length : todosDocs[i+1].index
+      const subseccion = texto.substring(inicio, fin)
+      compradores.push(parsearPersona(subseccion, 'COMPRADOR'))
+    }
+    return compradores
+  }
+
+  // Construir compradores por bloques NATURAL ... hasta el siguiente NATURAL o fin
+  const compradores: any[] = []
+  for (let i = 0; i < indiceNaturales.length; i++) {
+    const inicio = indiceNaturales[i]
+    const fin = i === indiceNaturales.length - 1 ? texto.length : indiceNaturales[i+1]
+    const bloque = texto.substring(inicio, fin)
+    compradores.push(parsearPersona(bloque, 'COMPRADOR'))
+  }
   return compradores
 }
 
@@ -1078,35 +1129,16 @@ const detectarRelacionCompradores = (compradores: any[]): {
   tipoRelacion?: string
   observaciones?: string
 } => {
-  if (compradores.length < 2) {
-    return {
-      sonConyuges: false,
-      tipoRelacion: 'COMPRADOR_UNICO'
-    }
-  }
-  
-  // Lógica simple: si hay apellidos diferentes y 2 compradores, posibles cónyuges
-  if (compradores.length === 2) {
-    const apellidos1 = compradores[0].apellidos.split(' ')
-    const apellidos2 = compradores[1].apellidos.split(' ')
-    
-    const apellidosCompartidos = apellidos1.some((ap1: string) => 
-      apellidos2.some((ap2: string) => ap1 === ap2)
-    )
-    
-    if (!apellidosCompartidos) {
-      return {
-        sonConyuges: true,
-        tipoRelacion: 'CONYUGES',
-        observaciones: 'Apellidos diferentes detectados'
-      }
-    }
-  }
-  
-  return {
+  // Por defecto: independientes
+  const resultadoBase = {
     sonConyuges: false,
-    tipoRelacion: 'INDEPENDIENTES'
+    tipoRelacion: compradores.length < 2 ? 'COMPRADOR_UNICO' : 'INDEPENDIENTES',
+    observaciones: undefined as string | undefined
   }
+
+  // Solo marcar cónyuges si el texto explícitamente lo dice en algún campo
+  // Este chequeo se hará a nivel de texto original en el futuro; por ahora, mantenemos independientes
+  return resultadoBase
 }
 
 /**
