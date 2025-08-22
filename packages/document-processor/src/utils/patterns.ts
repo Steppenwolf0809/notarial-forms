@@ -28,7 +28,7 @@ export class EcuadorPatterns {
   static readonly amountWords = /\b(UN|DOS|TRES|CUATRO|CINCO|SEIS|SIETE|OCHO|NUEVE|DIEZ|ONCE|DOCE|TRECE|CATORCE|QUINCE|DIECISEIS|DIECISIETE|DIECIOCHO|DIECINUEVE|VEINTE|VEINTIUN|TREINTA|CUARENTA|CINCUENTA|SESENTA|SETENTA|OCHENTA|NOVENTA|CIEN|CIENTO|DOSCIENTOS|TRESCIENTOS|CUATROCIENTOS|QUINIENTOS|SEISCIENTOS|SETECIENTOS|OCHOCIENTOS|NOVECIENTOS|MIL|MILLON|MILLONES)\s+(DOLARES?|USD)\b/gi;
   
   // Names and titles
-  static readonly name = /\b[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4}\b/g;
+  static readonly personName = /\b[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4}\b/g;
   static readonly nameFull = /\b[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]{2,50}\b/g;
   static readonly titles = /\b(DR|DRA|ING|ECON|AB|LIC|MSC|PHD|MD)\.\s*[A-ZÁÉÍÓÚÑ]/g;
   
@@ -63,6 +63,10 @@ export class EcuadorPatterns {
   static readonly fullAddress = /(CALLE|AV\.|AVENIDA)\s+([A-ZÁÉÍÓÚÑ\s]+?)\s+N?[°º]?\s*(\d+[\-\d]*)\s+Y\s+(CALLE|AV\.|AVENIDA)?\s*([A-ZÁÉÍÓÚÑ\s]+)/gi;
   static readonly simpleAddress = /(CALLE|AVENIDA|AV\.)\s+([A-ZÁÉÍÓÚÑ\s]+?)\s+Y\s+([A-ZÁÉÍÓÚÑ\s]+)/gi;
   static readonly addressLocation = /(?:DIRECCION|UBICADO\s+EN|INMUEBLE\s+UBICADO\s+EN)[:\s]+([A-ZÁÉÍÓÚÑ\s\d\-\.]+)/gi;
+  
+  // Nationality patterns (common nationalities in Spanish text, emphasized Ecuadorian context)
+  static readonly nationalityLabel = /\bNACIONALIDAD\b\s*[:\-]?\s*([A-ZÁÉÍÓÚÑ\s]{3,30})/gi;
+  static readonly nationalityWords = /\b(ECUATORIANO|ECUATORIANA|COLOMBIANO|COLOMBIANA|PERUANO|PERUANA|VENEZOLANO|VENEZOLANA|CHILENO|CHILENA|ARGENTINO|ARGENTINA|ESPAÑOL|ESPAÑOLA|ESTADOUNIDENSE|MEXICANO|MEXICANA|BRASILEÑO|BRASILEÑA|ITALIANO|ITALIANA|FRANCES|FRANCESA|ALEMAN|ALEMANA|CUBANO|CUBANA|URUGUAYO|URUGUAYA|PARAGUAYO|PARAGUAYA|BOLIVIANO|BOLIVIANA)\b/gi;
 }
 
 export class PatternValidator {
@@ -298,6 +302,38 @@ export class FieldExtractor {
       }
     });
 
+    // Extract nationality via labeled pattern first
+    const natLabeled = Array.from(text.matchAll(EcuadorPatterns.nationalityLabel));
+    natLabeled.forEach(match => {
+      const value = (match[1] || '').trim();
+      if (value) {
+        fields.push({
+          fieldName: 'nacionalidad',
+          value,
+          confidence: 0.88,
+          type: FieldType.NATIONALITY,
+          validationStatus: 'valid'
+        });
+      }
+    });
+
+    // Extract standalone nationality words (avoid duplicates if labeled exists)
+    if (natLabeled.length === 0) {
+      const natWords = Array.from(text.matchAll(EcuadorPatterns.nationalityWords));
+      natWords.forEach(match => {
+        const value = (match[0] || '').trim();
+        if (value) {
+          fields.push({
+            fieldName: 'nacionalidad',
+            value,
+            confidence: 0.8,
+            type: FieldType.NATIONALITY,
+            validationStatus: 'unknown'
+          });
+        }
+      });
+    }
+
     return fields;
   }
 
@@ -364,6 +400,7 @@ export class FieldExtractor {
       [FieldType.NOTARY_NAME]: 0.85,
       [FieldType.VALOR_OPERACION]: 0.9,
       [FieldType.FORMA_PAGO]: 0.8,
+      [FieldType.NATIONALITY]: 0.88,
       [FieldType.OTHER]: 0.7
     };
     

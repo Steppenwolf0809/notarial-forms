@@ -73,7 +73,7 @@ function App() {
               { id: 'upload', label: 'Subir Documentos', icon: 'upload' },
               { id: 'process', label: 'Procesar', icon: 'cog' },
               { id: 'results', label: 'Resultados', icon: 'document-text' },
-              { id: 'queue', label: 'Cola de Clientes', icon: 'users' },
+              // { id: 'queue', label: 'Cola de Clientes', icon: 'users' },
               { id: 'demo', label: 'Demo Completo', icon: 'eye' }
             ].map((tab) => (
               <motion.button

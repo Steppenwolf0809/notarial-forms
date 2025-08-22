@@ -124,9 +124,14 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.DocumentScalarFieldEnum = {
   id: 'id',
-  type: 'type',
   fileName: 'fileName',
+  originalName: 'originalName',
+  filePath: 'filePath',
+  type: 'type',
   status: 'status',
+  size: 'size',
+  notariaId: 'notariaId',
+  metadata: 'metadata',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -134,9 +139,18 @@ exports.Prisma.DocumentScalarFieldEnum = {
 exports.Prisma.ActiveSessionScalarFieldEnum = {
   id: 'id',
   documentId: 'documentId',
+  notariaId: 'notariaId',
   clientName: 'clientName',
+  tramiteType: 'tramiteType',
+  status: 'status',
+  priority: 'priority',
   position: 'position',
+  estimatedWaitTime: 'estimatedWaitTime',
   expiresAt: 'expiresAt',
+  readyAt: 'readyAt',
+  calledAt: 'calledAt',
+  completedAt: 'completedAt',
+  metadata: 'metadata',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -147,7 +161,52 @@ exports.Prisma.ExtractedFieldScalarFieldEnum = {
   fieldName: 'fieldName',
   value: 'value',
   confidence: 'confidence',
+  type: 'type',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.FormSessionScalarFieldEnum = {
+  id: 'id',
+  accessId: 'accessId',
+  documentId: 'documentId',
+  formType: 'formType',
+  ownerName: 'ownerName',
+  ownerCedula: 'ownerCedula',
+  status: 'status',
+  data: 'data',
+  expiresAt: 'expiresAt',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.QueueConfigScalarFieldEnum = {
+  notariaId: 'notariaId',
+  maxConcurrentSessions: 'maxConcurrentSessions',
+  sessionTimeoutMinutes: 'sessionTimeoutMinutes',
+  readyTimeoutMinutes: 'readyTimeoutMinutes',
+  estimatedTimePerTramite: 'estimatedTimePerTramite',
+  enablePriorities: 'enablePriorities',
+  autoExpireInactive: 'autoExpireInactive',
+  notificationSettings: 'notificationSettings',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EventLogScalarFieldEnum = {
+  id: 'id',
+  timestamp: 'timestamp',
+  event: 'event',
+  notariaId: 'notariaId',
+  sessionId: 'sessionId',
+  socketId: 'socketId',
+  userId: 'userId',
+  data: 'data',
+  metadata: 'metadata'
+};
+
+exports.Prisma.GlobalConfigScalarFieldEnum = {
+  id: 'id',
+  config: 'config',
   updatedAt: 'updatedAt'
 };
 
@@ -156,21 +215,93 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 };
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+exports.DocumentType = exports.$Enums.DocumentType = {
+  PDF_EXTRACTO: 'PDF_EXTRACTO',
+  PDF_DILIGENCIA: 'PDF_DILIGENCIA',
+  SCREENSHOT_VEHICULO: 'SCREENSHOT_VEHICULO'
+};
+
 exports.DocumentStatus = exports.$Enums.DocumentStatus = {
-  PENDING: 'PENDING',
+  UPLOADED: 'UPLOADED',
   PROCESSING: 'PROCESSING',
+  EXTRACTED: 'EXTRACTED',
+  SESSION_ACTIVE: 'SESSION_ACTIVE',
   COMPLETED: 'COMPLETED',
   ERROR: 'ERROR'
+};
+
+exports.TramiteType = exports.$Enums.TramiteType = {
+  COMPRAVENTA: 'COMPRAVENTA',
+  DONACION: 'DONACION',
+  CONSTITUCION_SOCIEDAD: 'CONSTITUCION_SOCIEDAD',
+  FIDEICOMISO: 'FIDEICOMISO',
+  CONSORCIO: 'CONSORCIO',
+  VEHICULO: 'VEHICULO',
+  DILIGENCIA: 'DILIGENCIA',
+  HIPOTECA: 'HIPOTECA',
+  PODER: 'PODER',
+  TESTAMENTO: 'TESTAMENTO',
+  OTRO: 'OTRO'
+};
+
+exports.SessionStatus = exports.$Enums.SessionStatus = {
+  WAITING: 'WAITING',
+  READY: 'READY',
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.PriorityLevel = exports.$Enums.PriorityLevel = {
+  LOW: 'LOW',
+  NORMAL: 'NORMAL',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL'
+};
+
+exports.FormType = exports.$Enums.FormType = {
+  UAFE_PERSONA_NATURAL: 'UAFE_PERSONA_NATURAL'
+};
+
+exports.FormSessionStatus = exports.$Enums.FormSessionStatus = {
+  DRAFT: 'DRAFT',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  COMPLETED: 'COMPLETED'
 };
 
 exports.Prisma.ModelName = {
   Document: 'Document',
   ActiveSession: 'ActiveSession',
-  ExtractedField: 'ExtractedField'
+  ExtractedField: 'ExtractedField',
+  FormSession: 'FormSession',
+  QueueConfig: 'QueueConfig',
+  EventLog: 'EventLog',
+  GlobalConfig: 'GlobalConfig'
 };
 
 /**

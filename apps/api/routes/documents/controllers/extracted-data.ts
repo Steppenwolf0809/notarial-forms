@@ -159,6 +159,12 @@ const extractPersonsData = (fields: any[]): any[] => {
         persons.set(personKey, {});
       }
       persons.get(personKey).pasaporte = value;
+    } else if (fieldName.includes('nacionalidad') || (field.type && String(field.type).toLowerCase() === 'nationality')) {
+      const personKey = 'persona_principal';
+      if (!persons.has(personKey)) {
+        persons.set(personKey, {});
+      }
+      persons.get(personKey).nacionalidad = value;
     }
   }
   

@@ -28,6 +28,7 @@ model Document {
   // Relations
   activeSessions  ActiveSession[]
   extractedFields ExtractedField[]
+  formSessions    FormSession[]
 
   @@map("documents")
 }
@@ -71,6 +72,26 @@ model ExtractedField {
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@map("extracted_fields")
+}
+
+// Form session for client-completed forms (e.g., UAFE Persona Natural)
+model FormSession {
+  id          String   @id @default(cuid())
+  accessId    String   @unique               // corto, para URL estática
+  documentId  String
+  formType    FormType @default(UAFE_PERSONA_NATURAL)
+  ownerName   String?
+  ownerCedula String?                        // usado como contraseña
+  status      FormSessionStatus @default(DRAFT)
+  data        Json?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("form_sessions")
 }
 
 // Queue configuration per notaría
@@ -129,6 +150,10 @@ enum DocumentType {
   SCREENSHOT_VEHICULO
 }
 
+enum FormType {
+  UAFE_PERSONA_NATURAL
+}
+
 enum SessionStatus {
   WAITING
   READY
@@ -157,4 +182,10 @@ enum PriorityLevel {
   NORMAL
   HIGH
   CRITICAL
+}
+
+enum FormSessionStatus {
+  DRAFT
+  PENDING_REVIEW
+  COMPLETED
 }

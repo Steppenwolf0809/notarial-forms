@@ -3,6 +3,7 @@ export * from './schemas/person.js'
 export * from './schemas/vehicle.js'
 export * from './schemas/document.js'
 export * from './schemas/session.js'
+export * from './schemas/uafe.js'
 
 // Export all types
 export * from './types/index.js'

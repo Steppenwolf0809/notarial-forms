@@ -29,8 +29,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   const [generatedForms, setGeneratedForms] = useState<any[]>([])
   const [showTramiteManager, setShowTramiteManager] = useState(false)
   const [currentTramiteData, setCurrentTramiteData] = useState<any>(null)
-  const [qrCode, setQrCode] = useState<string>('')
-  const [processingQueue, setProcessingQueue] = useState<any[]>([])
+  const [serverSessions, setServerSessions] = useState<any[]>([])
 
   const generateId = () => Math.random().toString(36).substr(2, 9)
 
@@ -146,76 +145,44 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
     setFiles(prev => prev.filter(f => f.id !== id))
   }
 
-  const generateForms = (extractedData: any) => {
-    const baseId = generateId()
-    
-    // Generar formulario para el comprador
-    const compradorForm = {
-      id: `${baseId}-comprador`,
-      tipo: 'comprador',
-      persona: extractedData.compradores?.[0] || extractedData.comprador,
-      acto: extractedData,
-      datosComplementarios: {
-        // Datos que el operador puede llenar
-        telefono: '',
-        celular: '', 
-        correoElectronico: '',
-        direccionDomiciliaria: '',
-        profesionOcupacion: '',
-        
-        // Información laboral
-        situacionLaboral: '',
-        nombreEntidad: '',
-        fechaIngreso: '',
-        direccionTrabajo: '',
-        provincia: extractedData.ubicacion.provincia,
-        ingresoMensual: '',
-        
-        // Información adicional
-        nivelEstudio: '',
-        genero: '',
-        estadoCivil: ''
-      },
-      link: `${window.location.origin}/formulario/${baseId}-comprador`,
-      status: 'generado'
-    }
-    
-    // Generar formulario para el vendedor  
-    const vendedorForm = {
-      id: `${baseId}-vendedor`,
-      tipo: 'vendedor',
-      persona: extractedData.vendedor,
-      acto: extractedData,
-      datosComplementarios: {
-        // Datos que el operador puede llenar
-        telefono: '',
-        celular: '',
-        correoElectronico: '',
-        direccionDomiciliaria: '',
-        profesionOcupacion: '',
-        
-        // Información laboral
-        situacionLaboral: '',
-        nombreEntidad: '',
-        fechaIngreso: '',
-        direccionTrabajo: '',
-        provincia: extractedData.ubicacion.provincia,
-        ingresoMensual: '',
-        
-        // Información adicional
-        nivelEstudio: '',
-        genero: '',
-        estadoCivil: ''
-      },
-      link: `${window.location.origin}/formulario/${baseId}-vendedor`,
-      status: 'generado'
-    }
-    
-    setGeneratedForms(prev => [...prev, compradorForm, vendedorForm])
-    
-    // Cambiar a la pestaña de procesamiento para mostrar los resultados
-    if (onProcessingComplete) {
-      onProcessingComplete('forms-generated', { compradorForm, vendedorForm })
+  // Generación local de formularios simplificada eliminada
+
+  // Crear sesiones reales en backend y actualizar links con accessId
+  const createSessionsForForms = async () => {
+    try {
+      const created = await Promise.all(generatedForms.map(async (form) => {
+        const payload = {
+          ownerName: `${form.persona.nombres} ${form.persona.apellidos}`.trim(),
+          ownerCedula: form.persona.cedula || form.persona.numeroDocumento || '0000000000',
+          data: {
+            personas: [
+              {
+                apellidos: form.persona.apellidos || '',
+                nombres: form.persona.nombres || '',
+                identificacion: { tipo: 'CEDULA', numero: form.persona.cedula || '' },
+                direccion: { callePrincipal: form.acto?.ubicacion?.callePrincipal, calleSecundaria: form.acto?.ubicacion?.calleSecundaria },
+              }
+            ],
+            ubicacionInmueble: {
+              callePrincipal: form.acto?.ubicacion?.callePrincipal || '',
+              numero: form.acto?.ubicacion?.numero || '',
+              calleSecundaria: form.acto?.ubicacion?.calleSecundaria || ''
+            },
+            informacionTramite: { valorContrato: String(form.acto?.valor || '') }
+          }
+        }
+        const res = await fetch('/api/documents/form-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const json = await res.json()
+        if (json?.success && json?.data?.accessId) {
+          return { ...form, link: `${window.location.origin}/?form=${json.data.accessId}` }
+        }
+        return form
+      }))
+      setGeneratedForms(created)
+      alert('Sesiones creadas. Links actualizados ✅')
+    } catch (e) {
+      console.error(e)
+      alert('No se pudieron crear las sesiones en el servidor')
     }
   }
 
@@ -267,23 +234,18 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
     }
   }
 
-  const handleGenerateQR = (tramiteData: any) => {
-    console.log('QR generado para trámite:', tramiteData.numeroTramite)
-    setQrCode(tramiteData.qrUrl)
-    // Aquí se podría llamar al backend para persistir el estado
-  }
+  // QR/cola removidos en la versión simplificada
 
-  const handleSendToClients = (tramiteData: any) => {
-    console.log('Enviando a clientes:', tramiteData.numeroTramite)
-    setProcessingQueue(prev => [...prev, tramiteData])
-    // Activar sistema de alertas para el trámite
-    alert(`✅ Sistema de cola activado para trámite ${tramiteData.numeroTramite}
-    
-🔔 Los clientes pueden acceder desde:
-${tramiteData.qrUrl}
-
-📱 También puedes ver la cola de trámites en la pestaña "Cola de Clientes"
-🔐 Los clientes necesitarán su cédula para acceder a su trámite específico`)
+  const listServerSessions = async () => {
+    try {
+      const res = await fetch('/api/documents/form-session')
+      const json = await res.json()
+      if (json?.success) {
+        setServerSessions(json.data || [])
+      }
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   // Mostrar TramiteManager si está activado
@@ -304,8 +266,7 @@ ${tramiteData.qrUrl}
         </div>
         <TramiteManager
           extractedData={currentTramiteData}
-          onGenerateQR={handleGenerateQR}
-          onSendToClients={handleSendToClients}
+          onGenerateQR={() => {}}
         />
       </div>
     )
@@ -632,7 +593,7 @@ ${tramiteData.qrUrl}
                         ).map((v: any, index: number) => (
                           <div key={index} className="border border-gray-200 rounded p-2 space-y-1">
                             <div className="text-xs font-medium text-gray-700">Vendedor {index + 1}:</div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                               <input
                                 type="text"
                                 placeholder="Nombres"
@@ -681,6 +642,38 @@ ${tramiteData.qrUrl}
                                   } : f))
                                 }}
                               />
+                              <select
+                                className="form-input text-xs focus:border-green-500"
+                                value={v?.nacionalidad || 'ECUATORIANA'}
+                                onChange={(e) => {
+                                  const arr = (fileData.extractedData.vendedores && fileData.extractedData.vendedores.length > 0
+                                    ? [...fileData.extractedData.vendedores]
+                                    : [ { ...fileData.extractedData.vendedor } ])
+                                  arr[index] = { ...arr[index], nacionalidad: e.target.value }
+                                  setFiles(prev => prev.map(f => f.id === fileData.id ? {
+                                    ...f,
+                                    extractedData: { ...f.extractedData, vendedores: arr, vendedor: arr[0] }
+                                  } : f))
+                                }}
+                              >
+                                <option value="ECUATORIANA">🇪🇨 ECUATORIANA</option>
+                                <option value="AMERICANA">🇺🇸 AMERICANA</option>
+                                <option value="COLOMBIANA">🇨🇴 COLOMBIANA</option>
+                                <option value="PERUANA">🇵🇪 PERUANA</option>
+                                <option value="VENEZOLANA">🇻🇪 VENEZOLANA</option>
+                                <option value="ARGENTINA">🇦🇷 ARGENTINA</option>
+                                <option value="CHILENA">🇨🇱 CHILENA</option>
+                                <option value="BRASILEÑA">🇧🇷 BRASILEÑA</option>
+                                <option value="ALEMANA">🇩🇪 ALEMANA</option>
+                                <option value="ESPAÑOLA">🇪🇸 ESPAÑOLA</option>
+                                <option value="FRANCESA">🇫🇷 FRANCESA</option>
+                                <option value="ITALIANA">🇮🇹 ITALIANA</option>
+                                <option value="CANADIENSE">🇨🇦 CANADIENSE</option>
+                                <option value="MEXICANA">🇲🇽 MEXICANA</option>
+                                <option value="CHINA">🇨🇳 CHINA</option>
+                                <option value="JAPONESA">🇯🇵 JAPONESA</option>
+                                <option value="EXTRANJERA">🌍 EXTRANJERA</option>
+                              </select>
                             </div>
                           </div>
                         ))}
@@ -771,6 +764,44 @@ ${tramiteData.qrUrl}
                                   }}
                                   className="form-input text-xs focus:border-green-500"
                                 />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="block text-xs text-gray-600">Nacionalidad:</label>
+                                <select
+                                  value={comprador.nacionalidad || 'ECUATORIANA'}
+                                  onChange={(e) => {
+                                    const newCompradores = [...(fileData.extractedData.compradores || [fileData.extractedData.comprador])]
+                                    newCompradores[index] = {...newCompradores[index], nacionalidad: e.target.value}
+                                    setFiles(prev => prev.map(f => 
+                                      f.id === fileData.id ? {
+                                        ...f,
+                                        extractedData: {
+                                          ...f.extractedData,
+                                          compradores: newCompradores
+                                        }
+                                      } : f
+                                    ))
+                                  }}
+                                  className="form-input text-xs focus:border-green-500"
+                                >
+                                  <option value="ECUATORIANA">🇪🇨 ECUATORIANA</option>
+                                  <option value="AMERICANA">🇺🇸 AMERICANA</option>
+                                  <option value="COLOMBIANA">🇨🇴 COLOMBIANA</option>
+                                  <option value="PERUANA">🇵🇪 PERUANA</option>
+                                  <option value="VENEZOLANA">🇻🇪 VENEZOLANA</option>
+                                  <option value="ARGENTINA">🇦🇷 ARGENTINA</option>
+                                  <option value="CHILENA">🇨🇱 CHILENA</option>
+                                  <option value="BRASILEÑA">🇧🇷 BRASILEÑA</option>
+                                  <option value="ALEMANA">🇩🇪 ALEMANA</option>
+                                  <option value="ESPAÑOLA">🇪🇸 ESPAÑOLA</option>
+                                  <option value="FRANCESA">🇫🇷 FRANCESA</option>
+                                  <option value="ITALIANA">🇮🇹 ITALIANA</option>
+                                  <option value="CANADIENSE">🇨🇦 CANADIENSE</option>
+                                  <option value="MEXICANA">🇲🇽 MEXICANA</option>
+                                  <option value="CHINA">🇨🇳 CHINA</option>
+                                  <option value="JAPONESA">🇯🇵 JAPONESA</option>
+                                  <option value="EXTRANJERA">🌍 EXTRANJERA</option>
+                                </select>
                               </div>
                             </div>
                           ) : null
@@ -888,7 +919,22 @@ ${tramiteData.qrUrl}
                 </motion.div>
               ))}
             </div>
-            
+
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={createSessionsForForms}
+                className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Generar enlaces seguros en servidor
+              </button>
+              <button
+                onClick={listServerSessions}
+                className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Ver enlaces creados
+              </button>
+            </div>
+ 
             {/* Resumen de acciones */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h4 className="font-medium text-yellow-800 mb-2">Siguiente paso:</h4>
@@ -899,6 +945,29 @@ ${tramiteData.qrUrl}
                 <li>4. El sistema generará PDFs listos para imprimir y firmar</li>
               </ol>
             </div>
+
+            {serverSessions.length > 0 && (
+              <div className="mt-4 bg-white border rounded p-4">
+                <h4 className="font-medium mb-2">Sesiones recientes</h4>
+                <ul className="space-y-2">
+                  {serverSessions.map((s: any) => (
+                    <li key={s.id} className="text-sm flex items-center justify-between">
+                      <span className="truncate mr-2">{s.ownerName || 'Sin nombre'} — {new Date(s.createdAt).toLocaleString()}</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => copyToClipboard(`${window.location.origin}/?form=${s.accessId}`)}
+                          className="px-2 py-1 bg-blue-600 text-white rounded"
+                        >Copiar link</button>
+                        <button
+                          onClick={() => window.open(`${window.location.origin}/?form=${s.accessId}`, '_blank')}
+                          className="px-2 py-1 bg-green-600 text-white rounded"
+                        >Abrir</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

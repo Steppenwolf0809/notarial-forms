@@ -50,13 +50,11 @@ interface TramiteData {
 interface TramiteManagerProps {
   extractedData: any
   onGenerateQR: (tramiteData: TramiteData) => void
-  onSendToClients: (tramiteData: TramiteData) => void
 }
 
 const TramiteManager: React.FC<TramiteManagerProps> = ({
   extractedData,
-  onGenerateQR,
-  onSendToClients
+  onGenerateQR
 }) => {
   const [tramiteData, setTramiteData] = useState<TramiteData | null>(null)
   const [activeSection, setActiveSection] = useState<'vendedor' | 'comprador'>('vendedor')
@@ -65,7 +63,7 @@ const TramiteManager: React.FC<TramiteManagerProps> = ({
   useEffect(() => {
     if (extractedData && !tramiteData) {
       const numeroTramite = `TR-${Date.now().toString().slice(-6)}`
-      const qrUrl = `${window.location.origin}/tramite/${numeroTramite}`
+      const qrUrl = ''
       
       // Detección automática del tipo de acto
       const tipoActoDetectado = detectarTipoActo(extractedData.actoContrato || '')
@@ -137,29 +135,62 @@ const TramiteManager: React.FC<TramiteManagerProps> = ({
     }))
   }
 
-  const handleGenerateQR = () => {
+  const handleGenerateQR = async () => {
     if (!tramiteData) return
-    
-    const updatedTramite = {
-      ...tramiteData,
-      status: 'listo-envio' as const
+
+    console.log('🚀 Agregando trámite a la cola...', { tramiteData })
+
+    try {
+      const vendedor = tramiteData.extractedData?.vendedor || tramiteData.extractedData?.vendedores?.[0] || {}
+      const comprador = tramiteData.extractedData?.comprador || tramiteData.extractedData?.compradores?.[0] || {}
+
+      console.log('👥 Datos de las partes:', { vendedor, comprador })
+
+      const payload = {
+        vendedor,
+        comprador,
+        tramiteData
+      }
+
+      const res = await fetch('/api/tramites/add-to-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      console.log('📡 Respuesta del servidor:', res.status, res.statusText)
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('❌ Error del servidor:', errorText)
+        throw new Error(`Error ${res.status}: ${errorText}`)
+      }
+
+      const json = await res.json()
+      console.log('✅ Trámite agregado a la cola:', json)
+
+      if (json?.success) {
+        const queueUrl = json.data.queueUrl || `${window.location.origin}/tramites`
+        
+        const updatedTramite = {
+          ...tramiteData,
+          status: 'listo-envio' as const,
+          qrUrl: queueUrl
+        }
+        setTramiteData(updatedTramite)
+        onGenerateQR(updatedTramite)
+        
+        alert(`✅ Trámite agregado exitosamente a la cola!\n\n📱 QR/Link único para todos los clientes:\n${queueUrl}\n\nLos clientes podrán:\n1. Escanear el QR o entrar al link\n2. Ver la lista de trámites pendientes\n3. Seleccionar su nombre\n4. Validarse con su cédula\n5. Completar su formulario UAFE`)
+      } else {
+        alert('❌ No se pudo agregar el trámite a la cola. Verifique la consola para más detalles.')
+      }
+    } catch (error) {
+      console.error('❌ Error general:', error)
+      alert('❌ Error inesperado al agregar trámite. Revise la consola para más detalles.')
     }
-    
-    setTramiteData(updatedTramite)
-    onGenerateQR(updatedTramite)
   }
 
-  const handleSendToClients = () => {
-    if (!tramiteData) return
-    
-    const updatedTramite = {
-      ...tramiteData,
-      status: 'enviado' as const
-    }
-    
-    setTramiteData(updatedTramite)
-    onSendToClients(updatedTramite)
-  }
+  // Envío a cola eliminado en la versión simplificada
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -500,44 +531,19 @@ const TramiteManager: React.FC<TramiteManagerProps> = ({
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-3">
                 <span className="text-blue-600">📱</span>
-                <h4 className="font-medium text-blue-800">QR de Acceso Generado</h4>
+                <h4 className="font-medium text-blue-800">Enlaces de Acceso Generados</h4>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-blue-700 mb-3">
-                    URL del trámite: 
-                  </p>
-                  <div className="bg-white p-3 rounded border border-blue-300 text-sm break-all">
-                    {tramiteData.qrUrl}
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(tramiteData.qrUrl)}
-                    className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                  >
-                    📋 Copiar URL
-                  </button>
-                </div>
-                
-                <div className="text-center">
-                  <div className="bg-white p-4 rounded border-2 border-blue-300 inline-block">
-                    <div className="w-32 h-32 bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-                      QR Code<br/>#{tramiteData.numeroTramite}
+              <div className="grid grid-cols-1 gap-2">
+                {tramiteData.qrUrl && (
+                  <div className="flex items-center justify-between bg-white p-3 rounded border border-blue-300 text-sm">
+                    <span className="truncate mr-2">{tramiteData.qrUrl}</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => copyToClipboard(tramiteData.qrUrl)} className="px-2 py-1 bg-blue-600 text-white text-xs rounded">Copiar</button>
+                      <button onClick={() => window.open(tramiteData.qrUrl, '_blank')} className="px-2 py-1 bg-green-600 text-white text-xs rounded">Abrir</button>
                     </div>
                   </div>
-                  <p className="text-xs text-blue-600 mt-2">
-                    Código QR estático
-                  </p>
-                </div>
-              </div>
-              
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <button
-                  onClick={handleSendToClients}
-                  className="w-full px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
-                >
-                  🚀 Enviar a Clientes y Activar Sistema de Cola
-                </button>
+                )}
               </div>
             </div>
           )}

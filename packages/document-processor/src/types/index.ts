@@ -37,6 +37,7 @@ export enum FieldType {
   NOTARY_NAME = 'notary_name',
   VALOR_OPERACION = 'valor_operacion',
   FORMA_PAGO = 'forma_pago',
+  NATIONALITY = 'nationality',
   OTHER = 'other'
 }
 

@@ -878,26 +878,71 @@ const parsearPersona = (seccion: string, calidad: string): any => {
   let cedula = '0000000000'
   let nacionalidad = 'ECUATORIANA'
   
+  console.log(`👤 INICIANDO extracción de nacionalidad y documento...`)
+  console.log(`👤 Sección para buscar nacionalidad:`, seccion.substring(0, 500))
+  
+  // NUEVO PATRÓN: Buscar nacionalidad explícitamente en la tabla
+  // Formato típico: Nombres | Tipo | Documento | Número | NACIONALIDAD | Calidad
+  const nacionalidadPatterns = [
+    // Buscar nacionalidades comunes después del número de documento
+    /(?:C[ÉE]DULA[:\s]*[0-9\.\-\s]{8,}|PASAPORTE[:\s]*[A-Z0-9\-\s]{4,})[:\s]*(ECUATORIANA|ALEMANA|AMERICANA|ESTADOUNIDENSE|COLOMBIANA|PERUANA|VENEZOLANA|ARGENTINA|CHILENA|BRASILENA|BRASILEÑA|MEXICANA|ESPAÑOLA|FRANCESA|ITALIANA|CHINA|JAPONESA|COREANA|INGLESA|CANADIENSE|AUSTRIACA|SUIZA|HOLANDESA|BELGA|PORTUGUESA|RUSA|POLACA|CUBANA|DOMINICANA|COSTARRICENSE|PANAMEÑA|GUATEMALTECA|HONDUREÑA|NICARAGUENSE|SALVADOREÑA|BOLIVIANA|PARAGUAYA|URUGUAYA|HAITIANA|JAMAIQUINA)/i,
+    // Buscar directamente la palabra NACIONALIDAD seguida del valor
+    /NACIONALIDAD[:\s]*(ECUATORIANA|ALEMANA|AMERICANA|ESTADOUNIDENSE|COLOMBIANA|PERUANA|VENEZOLANA|ARGENTINA|CHILENA|BRASILENA|BRASILEÑA|MEXICANA|ESPAÑOLA|FRANCESA|ITALIANA|CHINA|JAPONESA|COREANA|INGLESA|CANADIENSE|AUSTRIACA|SUIZA|HOLANDESA|BELGA|PORTUGUESA|RUSA|POLACA|CUBANA|DOMINICANA|COSTARRICENSE|PANAMEÑA|GUATEMALTECA|HONDUREÑA|NICARAGUENSE|SALVADOREÑA|BOLIVIANA|PARAGUAYA|URUGUAYA|HAITIANA|JAMAIQUINA)/i,
+    // Buscar en formato tabla con espacios: NÚMERO    NACIONALIDAD    CALIDAD
+    /([0-9]{10}|[A-Z0-9]{6,})\s+(ECUATORIANA|ALEMANA|AMERICANA|ESTADOUNIDENSE|COLOMBIANA|PERUANA|VENEZOLANA|ARGENTINA|CHILENA|BRASILENA|BRASILEÑA|MEXICANA|ESPAÑOLA|FRANCESA|ITALIANA|CHINA|JAPONESA|COREANA|INGLESA|CANADIENSE|AUSTRIACA|SUIZA|HOLANDESA|BELGA|PORTUGUESA|RUSA|POLACA|CUBANA|DOMINICANA|COSTARRICENSE|PANAMEÑA|GUATEMALTECA|HONDUREÑA|NICARAGUENSE|SALVADOREÑA|BOLIVIANA|PARAGUAYA|URUGUAYA|HAITIANA|JAMAIQUINA)\s+/i
+  ]
+  
+  // Probar patrones de nacionalidad
+  for (let i = 0; i < nacionalidadPatterns.length; i++) {
+    const patron = nacionalidadPatterns[i]
+    console.log(`👤 Probando patrón nacionalidad ${i + 1}:`, patron)
+    const match = seccion.match(patron)
+    if (match && match[1]) {
+      nacionalidad = match[1].toUpperCase()
+      console.log(`🌍 NACIONALIDAD ENCONTRADA con patrón ${i + 1}: ${nacionalidad}`)
+      break
+    } else if (match && match[2]) {
+      nacionalidad = match[2].toUpperCase()
+      console.log(`🌍 NACIONALIDAD ENCONTRADA con patrón ${i + 1}: ${nacionalidad}`)
+      break
+    }
+  }
+  
   // Buscar cédula ecuatoriana (permitiendo saltos/espacios/cortes)
   const cedulaMatch = seccion.match(/C[ÉE]DULA[:\s]*([0-9\.\-\s]{10,})/i)
   if (cedulaMatch) {
     const soloDigitos = cedulaMatch[1].replace(/\D/g, '')
-    if (soloDigitos.length >= 10) cedula = soloDigitos.substring(0, 10)
-    console.log(`👤 Cédula ecuatoriana encontrada: ${cedula}`)
+    if (soloDigitos.length >= 10) {
+      cedula = soloDigitos.substring(0, 10)
+      // Si encontramos cédula ecuatoriana y no hay nacionalidad explícita, asumir ECUATORIANA
+      if (nacionalidad === 'ECUATORIANA' || !nacionalidad) {
+        nacionalidad = 'ECUATORIANA'
+      }
+    }
+    console.log(`👤 Cédula ecuatoriana encontrada: ${cedula} con nacionalidad: ${nacionalidad}`)
   } else {
     // Buscar pasaporte extranjero
     const pasaporteMatch = seccion.match(/PASAPORTE[:\s]*([A-Z0-9\-\s]{4,20}?)(?=\s+(?:ECUATORIANA|ALEMANA|AMERICANA|COLOMBIANA|PERUANA|VENEZOLANA|ARGENTINA|CHILENA|BRASILENA|NACIONALIDAD|CALIDAD|COMPRADOR|VENDEDOR|PERSONA|QUE|REPRESENTA|$))/i)
     if (pasaporteMatch) {
-      cedula = pasaporteMatch[1].replace(/[^A-Z0-9]/g, '')
+      cedula = pasaporteMatch[1].replace(/[^A-Z0-9]/g, '').substring(0, 15) // Limitar longitud
       console.log(`👤 Pasaporte encontrado: ${cedula}`)
       
-      // Detectar nacionalidad
-      if (seccion.includes('ALEMANA')) nacionalidad = 'ALEMANA'
-      else if (seccion.includes('AMERICANA')) nacionalidad = 'AMERICANA'
-      else if (seccion.includes('COLOMBIANA')) nacionalidad = 'COLOMBIANA'
-      else nacionalidad = 'EXTRANJERA'
+      // Si no se encontró nacionalidad explícita, detectar por contexto
+      if (nacionalidad === 'ECUATORIANA') {
+        if (seccion.includes('ALEMANA')) nacionalidad = 'ALEMANA'
+        else if (seccion.includes('AMERICANA') || seccion.includes('ESTADOUNIDENSE')) nacionalidad = 'AMERICANA'
+        else if (seccion.includes('COLOMBIANA')) nacionalidad = 'COLOMBIANA'
+        else if (seccion.includes('PERUANA')) nacionalidad = 'PERUANA'
+        else if (seccion.includes('VENEZOLANA')) nacionalidad = 'VENEZOLANA'
+        else if (seccion.includes('ARGENTINA')) nacionalidad = 'ARGENTINA'
+        else if (seccion.includes('CHILENA')) nacionalidad = 'CHILENA'
+        else if (seccion.includes('BRASILENA') || seccion.includes('BRASILEÑA')) nacionalidad = 'BRASILEÑA'
+        else nacionalidad = 'EXTRANJERA'
+      }
     }
   }
+  
+  console.log(`👤 RESULTADO documento: ${cedula}, nacionalidad: ${nacionalidad}`)
   
   // Extraer nombre - buscar después de "Natural" hasta antes de "REPRESENTADO" o "POR"
   let nombreCompleto = 'NO_EXTRAIDO NO_EXTRAIDO'

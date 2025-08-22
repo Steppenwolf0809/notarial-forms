@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "bull"],
+    "typeRoots": [
+      "../../node_modules/@types",
+      "../../packages/backend/node_modules/@types",
+      "../../packages/frontend/node_modules/@types"
+    ]
+  },
+  "include": [
+    "routes/**/*",
+    "types/**/*"
+  ]
+}
+
+

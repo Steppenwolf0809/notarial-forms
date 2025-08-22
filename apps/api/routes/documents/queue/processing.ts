@@ -1,7 +1,8 @@
-import Bull, { Job, Queue } from 'bull';
+import Bull from 'bull';
+import type { Job, Queue } from 'bull';
 import Redis from 'ioredis';
 import winston from 'winston';
-import { DocumentProcessor } from '@notarial-forms/document-processor';
+import { DocumentProcessor, DocumentType } from '../../../../../packages/document-processor/src';
 import { PrismaClient } from '@prisma/client';
 
 // Logger
@@ -24,9 +25,9 @@ const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD,
-  retryDelayOnFailover: 1000,
   maxRetriesPerRequest: 3,
-  lazyConnect: true
+  lazyConnect: true,
+  retryStrategy: (times) => Math.min(times * 1000, 3000)
 });
 
 // Initialize Prisma client
@@ -91,7 +92,7 @@ export interface ProcessingProgress {
 }
 
 // Create processing queue
-export const processingQueue: Queue<DocumentProcessingJobData> = new Bull('document-processing', {
+export const processingQueue: any = new Bull('document-processing', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -116,7 +117,7 @@ export const processingQueue: Queue<DocumentProcessingJobData> = new Bull('docum
 });
 
 // Job processing handler
-processingQueue.process('process-document', 3, async (job: Job<DocumentProcessingJobData>) => {
+processingQueue.process('process-document', 3, async (job: any) => {
   const { documentId, filePath, fileName, options = {}, metadata = {} } = job.data;
   
   logger.info(`Starting document processing for job ${job.id}`, {
@@ -189,7 +190,7 @@ processingQueue.process('process-document', 3, async (job: Job<DocumentProcessin
     // Process document with document-processor
     const startTime = Date.now();
     const processingResult = await documentProcessor.processDocument(filePath, {
-      forceDocumentType: shouldAutoDetectVehicle ? 'SCREENSHOT_VEHICULO' : undefined,
+      forceDocumentType: shouldAutoDetectVehicle ? DocumentType.SCREENSHOT_VEHICULO : undefined,
       enhanceImage: options.enhanceImage !== false,
       minConfidence: options.minConfidence || 0.7,
       extractImages: options.extractImages !== false,
@@ -395,7 +396,7 @@ processingQueue.process('process-document', 3, async (job: Job<DocumentProcessin
 });
 
 // Job event handlers
-processingQueue.on('completed', (job: Job<DocumentProcessingJobData>, result: DocumentProcessingResult) => {
+processingQueue.on('completed', (job: any, result: DocumentProcessingResult) => {
   logger.info(`Job ${job.id} completed successfully`, {
     jobId: job.id,
     documentId: job.data.documentId,
@@ -404,7 +405,7 @@ processingQueue.on('completed', (job: Job<DocumentProcessingJobData>, result: Do
   });
 });
 
-processingQueue.on('failed', (job: Job<DocumentProcessingJobData>, error: Error) => {
+processingQueue.on('failed', (job: any, error: Error) => {
   logger.error(`Job ${job.id} failed after ${job.attemptsMade} attempts:`, {
     jobId: job.id,
     documentId: job.data.documentId,
@@ -413,14 +414,14 @@ processingQueue.on('failed', (job: Job<DocumentProcessingJobData>, error: Error)
   });
 });
 
-processingQueue.on('stalled', (job: Job<DocumentProcessingJobData>) => {
+processingQueue.on('stalled', (job: any) => {
   logger.warn(`Job ${job.id} stalled`, {
     jobId: job.id,
     documentId: job.data.documentId
   });
 });
 
-processingQueue.on('progress', (job: Job<DocumentProcessingJobData>, progress: ProcessingProgress) => {
+processingQueue.on('progress', (job: any, progress: ProcessingProgress) => {
   logger.debug(`Job ${job.id} progress: ${progress.progress}% - ${progress.message}`, {
     jobId: job.id,
     documentId: job.data.documentId,
@@ -438,7 +439,7 @@ export const addDocumentProcessingJob = async (
     attempts?: number;
     jobId?: string;
   } = {}
-): Promise<Job<DocumentProcessingJobData>> => {
+): Promise<any> => {
   const job = await processingQueue.add('process-document', data, {
     priority: options.priority || 0,
     delay: options.delay || 0,
@@ -500,7 +501,7 @@ export const cancelJob = async (jobId: string): Promise<boolean> => {
 };
 
 // Retry failed job
-export const retryJob = async (jobId: string): Promise<Job<DocumentProcessingJobData> | null> => {
+export const retryJob = async (jobId: string): Promise<any | null> => {
   try {
     const job = await processingQueue.getJob(jobId);
     if (!job) return null;
@@ -584,7 +585,7 @@ const sendWebhookNotification = async (
       data: payload
     });
 
-    // TODO: Implement actual HTTP webhook delivery with retry logic
+    // Implement actual HTTP webhook delivery with retry logic
   } catch (error) {
     logger.error('Failed to send webhook notification:', error);
   }

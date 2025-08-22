@@ -44,6 +44,17 @@ import {
   processHealthCheck
 } from './controllers/process';
 
+// Form session controllers (cliente completa formulario)
+import {
+  createFormSession,
+  getFormSessionByAccessId,
+  updateFormSessionByAccessId,
+  completeFormSession,
+  generateFormPdf,
+  createStandaloneFormSession,
+  listFormSessions
+} from './controllers/form-session';
+
 // Create router
 const router = express.Router();
 
@@ -56,7 +67,7 @@ router.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Upload-Source']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Upload-Source', 'X-Cedula']
 }));
 
 // Health check endpoints
@@ -140,6 +151,48 @@ router.delete('/processing/:id/cancel',
 router.post('/processing/:id/retry',
   processRateLimit,
   retryProcessing
+);
+
+// Form session endpoints
+router.post('/:id/form-session',
+  processRateLimit,
+  validateCUID('id'),
+  validateContentType(['application/json']),
+  createFormSession
+);
+
+router.get('/form-session/:accessId',
+  queryRateLimit,
+  getFormSessionByAccessId
+);
+
+router.put('/form-session/:accessId',
+  processRateLimit,
+  validateContentType(['application/json']),
+  updateFormSessionByAccessId
+);
+
+router.post('/form-session/:accessId/complete',
+  processRateLimit,
+  validateContentType(['application/json']),
+  completeFormSession
+);
+
+router.get('/form-session/:accessId/pdf',
+  queryRateLimit,
+  generateFormPdf
+);
+
+// Standalone create and list (para flujo simulado del frontend)
+router.post('/form-session',
+  processRateLimit,
+  validateContentType(['application/json']),
+  createStandaloneFormSession
+);
+
+router.get('/form-session',
+  queryRateLimit,
+  listFormSessions
 );
 
 // Error handling middleware
